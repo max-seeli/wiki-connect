@@ -1,8 +1,9 @@
+from warnings import warn
+
 import torch
 from torch_geometric.utils import from_networkx
-from transformers import AutoTokenizer, AutoModel
 from tqdm import tqdm
-from warnings import warn
+from transformers import AutoModel, AutoTokenizer
 
 from wiki_connect.data.util import load_graph
 
@@ -33,7 +34,7 @@ class NodeEmbedding:
             raise ValueError(
                 "Graph not loaded. Please run 'load_and_preprocess_graph' first.")
 
-        for node in tqdm(self.graph.nodes, desc="Processing nodes"):
+        for node in tqdm(self.graph.nodes, desc="Embedding nodes"):
             info_text = self.graph.nodes[node]["info_text"]
 
             # Tokenize and process with model
@@ -54,8 +55,8 @@ class NodeEmbedding:
 
 
 if __name__ == "__main__":
-    from argparse import ArgumentParser
     import os
+    from argparse import ArgumentParser
     parser = ArgumentParser(description="Node Embedding")
     parser.add_argument("--graph_path", type=str,
                         required=True, help="Path to the input graph")

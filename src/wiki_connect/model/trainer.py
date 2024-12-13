@@ -51,6 +51,7 @@ class LinkPredictionTrainer:
         )
 
     def train(self):
+        """Train the model for one epoch."""
         self.encoder.train()
         self.predictor.train()
         self.optimizer.zero_grad()
@@ -68,6 +69,23 @@ class LinkPredictionTrainer:
 
     @torch.no_grad()
     def evaluate(self, data):
+        """
+        Evaluate the model on the given data.
+
+        Parameters
+        ----------
+        data : torch_geometric.data.Data
+            The data to evaluate on.
+
+        Returns
+        -------
+        auc : float
+            The ROC AUC score.
+        ap : float
+            The average precision score.
+        p : float
+            The precision score.
+        """
         self.encoder.eval()
         self.predictor.eval()
         x = self.encoder(data.x, data.edge_index)
@@ -82,6 +100,7 @@ class LinkPredictionTrainer:
         return auc, ap, p
 
     def run(self):
+        """Train the model and evaluate on the test set."""
         best_val_auc, best_val_ap, best_val_p = 0, 0, 0
 
         for epoch in range(1, self.epochs + 1):

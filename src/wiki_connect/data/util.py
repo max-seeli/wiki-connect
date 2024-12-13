@@ -1,7 +1,9 @@
-import pickle
 import json
-import networkx as nx
+import pickle
+
 import matplotlib.pyplot as plt
+import networkx as nx
+
 
 def draw_graph(graph: nx.Graph):
     """
@@ -17,17 +19,18 @@ def draw_graph(graph: nx.Graph):
     nx.draw(graph, pos, with_labels=True, node_size=50,
             font_size=8, arrowstyle='->', arrowsize=10)
     plt.title("Wikipedia Referenced Pages Graph")
-    plt.show()
+    plt.show(block=False)
+
 
 def load_graph(file_path: str) -> nx.Graph:
     """
     Load a NetworkX graph from a file.
-    
+
     Parameters
     ----------
     file_path : str
         The path to the file containing the graph.
-        
+
     Returns
     -------
     nx.Graph
@@ -48,7 +51,7 @@ def load_graph(file_path: str) -> nx.Graph:
 def save_graph(graph: nx.Graph, file_path: str):
     """
     Save a NetworkX graph to a file.
-    
+
     Parameters
     ----------
     graph : nx.Graph

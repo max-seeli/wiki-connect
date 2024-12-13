@@ -52,7 +52,7 @@ def build_graph(start_title, depth=2, layer_size=50):
     visited = set()
     pending_edges = []
 
-    for _ in tqdm(range(depth)):
+    for _ in tqdm(range(depth), desc="Crawling layers"):
         current_titles = [title for title in queue if title not in visited]
 
         if not current_titles:
@@ -75,7 +75,7 @@ def build_graph(start_title, depth=2, layer_size=50):
         for title, info in referenced_pages.items():
             if title not in graph.nodes:
                 continue
-            
+
             graph.nodes[title]["title"] = info["title"]
             graph.nodes[title]["info_text"] = info["info_text"]
             graph.nodes[title]["categories"] = info["categories"]
@@ -126,10 +126,10 @@ if __name__ == "__main__":
     from argparse import ArgumentParser
 
     parser = ArgumentParser()
-    parser.add_argument("--start-title", type=str, default="Computer science")
+    parser.add_argument("--start_title", type=str, default="Computer science")
     parser.add_argument("--depth", type=int, default=3)
-    parser.add_argument("--layer-size", type=int, default=10)
-    parser.add_argument("--output-path", type=str,
+    parser.add_argument("--layer_size", type=int, default=10)
+    parser.add_argument("--output_path", type=str,
                         default="data/test_graph.json")
 
     args = parser.parse_args()

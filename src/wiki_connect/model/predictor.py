@@ -14,11 +14,6 @@ class LinkPredictor(nn.Module):
 
         self.dropout = dropout
 
-    def reset_parameters(self):
-        for lin in self.lins:
-            nn.init.xavier_uniform_(lin.weight)
-            lin.bias.data.fill_(0)
-
     def forward(self, x_i, x_j):
         # Concatenate pair of node embeddings
         x = torch.cat([x_i, x_j], dim=-1)

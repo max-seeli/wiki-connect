@@ -9,13 +9,13 @@ from wiki_connect.data import util
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
 G = nx.DiGraph()
-G.add_node("Hello", 
+G.add_node("Hello",
            info_text="This is a test",
-           categories=["Test", "Hello"], 
+           categories=["Test", "Hello"],
            page_name="Hello")
-G.add_node("World", 
+G.add_node("World",
            info_text="This is a test",
-           categories=["Test", "World"], 
+           categories=["Test", "World"],
            page_name="World")
 G.add_edge("Hello", "World")
 
@@ -35,6 +35,7 @@ def test_json_loading():
         if os.path.exists(file_path):
             os.remove(file_path)
 
+
 def test_pkl_loading():
     file_path = os.path.join(script_dir, "test_graph.pkl")
 
@@ -50,6 +51,7 @@ def test_pkl_loading():
         if os.path.exists(file_path):
             os.remove(file_path)
 
+
 def test_invalid_file_format():
     file_path = os.path.join(script_dir, "test_graph.txt")
 
@@ -59,6 +61,7 @@ def test_invalid_file_format():
         assert str(e) == "Invalid file format. Must be .pkl or .json"
     else:
         assert False, "Should have raised an exception"
+
 
 def test_json_saving():
     file_path = os.path.join(script_dir, "test_graph.json")
@@ -76,6 +79,7 @@ def test_json_saving():
         if os.path.exists(file_path):
             os.remove(file_path)
 
+
 def test_pkl_saving():
     file_path = os.path.join(script_dir, "test_graph.pkl")
 
@@ -90,6 +94,7 @@ def test_pkl_saving():
     finally:
         if os.path.exists(file_path):
             os.remove(file_path)
+
 
 def test_invalid_file_format_saving():
     file_path = os.path.join(script_dir, "test_graph.txt")
