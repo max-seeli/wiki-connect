@@ -9,7 +9,7 @@ The following diagram shows the general pipeline of the project:
 ![Pipeline](doc/overview.drawio.png)
 
 ## Setup
-The easiest way to setup the project is to use `uv` and simply run the following command:
+The project was developed using Python 3.12. The easiest way to setup the project is to use `uv` and simply run the following command:
 ```bash
 uv sync
 ```

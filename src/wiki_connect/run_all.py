@@ -5,7 +5,7 @@ command = "python src/wiki_connect/data/crawler.py --depth 10 --layer_size 1000 
 subprocess.run(command, shell=True, check=True)
 
 # Load the graph and generate embeddings for each node.
-command = "python src/wiki_connect/model/embed.py --graph_path data/wiki_graph.json --output_path data/wiki_graph.pt"
+command = "python src/wiki_connect/model/embed.py --graph_path data/wiki_graph.pkl --output_path data/wiki_graph.pt"
 subprocess.run(command, shell=True, check=True)
 
 # Hyperparameter optimization on link prediction model on the graph.
