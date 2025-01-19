@@ -19,7 +19,7 @@ def draw_graph(graph: nx.Graph):
     nx.draw(graph, pos, with_labels=True, node_size=50,
             font_size=8, arrowstyle='->', arrowsize=10)
     plt.title("Wikipedia Referenced Pages Graph")
-    plt.show(block=False)
+    plt.show()
 
 
 def load_graph(file_path: str) -> nx.Graph:
@@ -67,3 +67,8 @@ def save_graph(graph: nx.Graph, file_path: str):
             json.dump(nx.node_link_data(graph, edges="edges"), f, indent=4)
     else:
         raise ValueError("Invalid file format. Must be .pkl or .json")
+
+
+if __name__ == "__main__":
+    graph = load_graph("data/deep_learning_graph.json")
+    draw_graph(graph)

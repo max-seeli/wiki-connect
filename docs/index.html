@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Graph</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="./data_util.js" type="module"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+
+    <style>
+        /* Add styles for your SVG or graph */
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .node {
+            cursor: pointer;
+        }
+        /*
+        .link {
+            stroke-opacity: 0.6;
+        }
+        */
+
+        #switch {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+
+            width: fit-content;
+        }
+
+        #switch input {
+            cursor: pointer;
+        }
+
+        #switch input:checked {
+            background-color: #d37925;
+            border-color: #d37925;
+        }     
+        
+        #search {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 300px;
+        }
+
+        #search-bar:focus {
+            border: 1px solid #d37925;
+            box-shadow: none;
+        }
+
+        #button-addon2:active {
+            background-color: #864d18;
+            border-color: #864d18;
+        }
+
+        #button-addon2:focus {
+            box-shadow: none;
+        }
+
+
+    </style>
+</head>
+<body>
+
+    <div id="switch" class="position-absolute top-1 end-1 p-2 border rounded shadow bg-white">
+        <input class="form-check-input pl-1" type="checkbox" role="switch" id="showPredictions" onfocus="this.blur();">
+        <label id="showPredictionsLabel" class="form-check-label ms-2" for="showPredictions">Predictions</label>
+    </div>
+    <div id="search" class="input-group mb-3 shadow">
+        <input id="search-bar" list="suggestions" type="text" class="form-control" placeholder="Search for a page" aria-label="Search for a page" aria-describedby="button-addon2">
+        <datalist id="suggestions">
+            <!-- Suggestions are dynamically added here -->
+        </datalist>
+        <button class="btn btn-secondary" type="button" id="button-addon2">Search</button>
+    </div>
+    <svg id="graph"></svg>
+    <script type="module">
+        import { getWikiDataJSON, getPredictionDataJSON } from './data_util.js';
+
+        const DEFAULT_PAGE = "0";
+        const POSITION_SCALE = 300;
+        const CENTER_SCALE = 80;
+
+const svg = d3.select("#graph");
+const data = await getWikiDataJSON();
+const nodes = data.nodes;
+const edges = data.edges;
+const predictions = await getPredictionDataJSON();
+const id_to_title = {};
+data.nodes.forEach(node => id_to_title[node.id] = node.title);
+const title_to_id = {};
+data.nodes.forEach(node => title_to_id[node.title] = node.id);
+
+const set_size = () => {
+    const width = window.innerWidth,
+        height = window.innerHeight;
+    svg.attr("width", width).attr("height", height)
+        .attr("viewBox", [-width / 2, -height / 2, width, height]);
+};
+
+set_size();
+d3.select(window).on("resize", set_size);
+
+const updateName = (name) => {
+    const url = new URL(window.location);
+    url.searchParams.set("name", name);
+    window.history.pushState({ name }, "", url);
+}
+
+const shuffle = (array) => {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1)); // Random index from 0 to i
+        [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+    }
+    return array;
+}
+
+const splitWordsIntoRows = (words) => {
+    const n = words.length;
+    const topSize = Math.floor(n / 3) + (n % 3 === 2 ? 1 : 0);
+    const middleSize = Math.floor(n / 3) + (n % 3 >= 1 ? 1 : 0);
+    const bottomSize = n - (topSize + middleSize);
+
+    const topRow = words.slice(0, topSize).join(" ");
+    const middleRow = words.slice(topSize, topSize + middleSize).join(" ");
+    const bottomRow = words.slice(topSize + middleSize).join(" ");
+
+    return [topRow, middleRow, bottomRow].filter(row => row.length > 0);
+}
+
+const showPredictions = () => {
+    return document.getElementById("showPredictions").checked;
+};
+
+const drawGraph = async (pageId) => {
+    svg.html("");
+    console.log("Drawing graph for", id_to_title[pageId]);
+
+    const pageName = id_to_title[pageId];  
+    
+    const page = {
+        id: pageId,
+        group: 1
+    };
+
+    const neigh = Object.entries(predictions[title_to_id[pageName]]["neighbors"])
+                        .map(([neigh, prob]) => ({ id: neigh, group: 2, pred: prob }));
+    const preds = Object.entries(predictions[title_to_id[pageName]]["top_non_neighbors"])
+                        .map(([neigh, prob]) => ({ id: neigh, group: 3, pred: prob }));
+    
+    // Shuffling the nodes to make the graph look better
+    let vertices = [];
+    if (showPredictions()) {
+        vertices = shuffle(neigh.concat(preds));
+    }
+    else {
+        vertices = shuffle(neigh);
+    }
+    const minProb = Math.min(...vertices.map(node => node.pred));
+    const maxProb = Math.max(...vertices.map(node => node.pred));  
+    vertices = vertices.concat(page);
+    const usedEdges = edges.filter(link => vertices.find(node => node.id == link.source) && vertices.find(node => node.id == link.target))
+        .map(link => ({
+            source: link.source,
+            target: link.target,
+            value: link.source == page.id || link.target == page.id ? 2 : 0.3,
+            stroke: link.source == page.id || link.target == page.id ? "#333" : "#999",
+            opacity: link.source == page.id || link.target == page.id ? 0.8 : 0.5
+        }));
+
+    const positions = {};
+
+    vertices.forEach((node, i) => {
+        const angle = 2 * Math.PI * i / (vertices.length);
+        const offset =  1 - (node.pred - minProb) / (maxProb - minProb) || minProb;
+        const scale = POSITION_SCALE + offset * POSITION_SCALE / 2;
+        positions[node.id] = {
+            x: Math.cos(angle) * scale,
+            y: Math.sin(angle) * scale
+        };
+    });
+    positions[page.id] = { x: 0, y: 0 };
+
+
+    const link = svg.append("g")
+        .selectAll("line")
+        .data(usedEdges)
+        .join("line")
+        .attr("class", "link")
+        .attr("x1", d => positions[d.source].x)
+        .attr("y1", d => positions[d.source].y)
+        .attr("x2", d => positions[d.target].x)
+        .attr("y2", d => positions[d.target].y)
+        .attr("stroke-width", d => d.value)
+        .attr("stroke", d => d.stroke)
+        .attr("opacity", d => d.opacity);
+
+    const node = svg.append("g")
+        .selectAll("circle")
+        .data(vertices)
+        .join("circle")
+        .attr("r", d => d.group === 1 ? CENTER_SCALE : 5)
+        .attr("fill", d => d.group === 1 ? "steelblue" : d.group === 2 ? "steelblue" : "orange")
+        .attr("class", "node")
+        .attr("cx", d => positions[d.id].x)
+        .attr("cy", d => positions[d.id].y)
+        .on("click", (event, d) => {
+            console.log("Clicked on", d.id);
+            updateName(d.id);
+            drawGraph(d.id);
+        });
+    node.append("title").text(d => id_to_title[d.id]);
+
+    let lines = id_to_title[page.id].split(" ");
+    lines = splitWordsIntoRows(lines);
+    console.log(lines)
+    let y = 0;
+    let dy = 1.2;
+    if (lines.length % 2 == 0) {
+        y = -dy * lines.length / 4;
+    }
+    else {
+        y = -dy * (lines.length - 1) / 2;
+    }
+
+    // make to em
+    y = y + "em";
+    dy = dy + "em";
+
+    const label = svg.append("text")
+        .attr("x", 0)
+        .attr("y", y)
+        .attr("text-anchor", "middle")
+        .attr("fill", "white")
+        .attr("font-weight", "bold")
+        
+    lines.forEach((line, i) => {
+        label.append("tspan")
+            .attr("x", 0)
+            .attr("dy", i === 0 ? 0 : dy)
+            .text(line);
+    });
+
+};
+
+const addSuggestions = () => {
+    const suggestions = Object.keys(title_to_id);
+    const datalist = document.getElementById("suggestions");
+    suggestions.forEach(suggestion => {
+        const option = document.createElement("option");
+        option.value = suggestion;
+        datalist.appendChild(option);
+    });
+};
+
+addSuggestions();
+
+const url_params = new URLSearchParams(window.location.search);
+if (!url_params.get("name")) {
+    url_params.set("name", DEFAULT_PAGE);
+    window.history.replaceState({ name: DEFAULT_PAGE }, "", window.location.pathname + "?" + url_params.toString());
+}
+
+drawGraph(url_params.get("name"));
+        
+
+window.onpopstate = (event) => {
+    console.log("Pop state", event.state); 
+    console.log("Rest of history", window.history);
+    if (event.state && event.state.name) {
+        drawGraph(event.state.name);
+    } else {
+        drawGraph(DEFAULT_PAGE);
+    }
+};
+
+document.getElementById("showPredictions").addEventListener("change", (event) => {
+    drawGraph(url_params.get("name"));
+});
+
+document.getElementById("button-addon2").addEventListener("click", (event) => {
+    let search = document.getElementById("search-bar").value;
+    console.log(title_to_id);
+    console.log(search);
+    console.log(title_to_id[search]);
+    
+    search = search.trim().toLowerCase();
+    let match = Object.keys(title_to_id).find(key => key.toLowerCase() === search);
+    console.log(match)
+    if (match) {
+        updateName(title_to_id[match]);
+        drawGraph(title_to_id[match]);
+    } else {
+        alert("No such page '" + search + "'");
+    }
+});
+    </script>
+</body>
+</html>

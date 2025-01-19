@@ -34,7 +34,7 @@ To access the Wikipedia pages, the scraper uses the Wikimedia API. The API allow
 
 The script for generating the dataset can be found in the `data` directory and is a standalone command line tool, that can be run with the following command:
 ```bash
-python src/wiki_connect/data/crawler.py --start_title "Deep Learning" --depth 2 --layer_size 5 --output_file "data/deep_learning_graph.json"
+python src/wiki_connect/data/crawler.py --start_title "Deep Learning" --depth 5 --layer_size 100 --output_path "data/deep_learning_graph.json"
 ```
 
 ## Node Embeddings
@@ -99,7 +99,7 @@ This repository also includes an inference pipeline, which allows to print the t
 
 The pipeline can be run with the following command:
 ```bash
-python src/wiki_connect/model/inference.py --k 10 --data_path data/deep_learning_graph.pt --encoder_path model/encoder.pth --predictor_path model/predictor.pth
+python src/wiki_connect/model/inference.py --k 10 --graph_path data/deep_learning_graph.pt --encoder_path model/encoder.pth --predictor_path model/predictor.pth
 ```
 
 The pipeline will output the top-k most and least likely links in the graph, based on the model's predictions. The links are printed in the following format (these are probabilities on a slightly distribution shifted graph compared to the training data):

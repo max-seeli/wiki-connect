@@ -23,7 +23,7 @@ def filter_titles(titles: List[str]) -> List[str]:
     List[str]
         The filtered list of titles.
     """
-    forbidden_prefixes = ["File:", "Category:",
+    forbidden_prefixes = ["File:", "Category:", "Help:", "Talk:", "User:", "Draft:", "MediaWiki:",
                           "Wikipedia:", "Template:", "Portal:", "Template talk:"]
     return [title for title in titles if not any(title.startswith(prefix) for prefix in forbidden_prefixes)]
 
@@ -118,8 +118,9 @@ def main(start_title, depth, layer_size, output_path):
         The path to save the graph to.
     """
     graph = build_graph(start_title, depth=depth, layer_size=layer_size)
+    # Enumerate the nodes to make sure the node names are unique integer identifiers
+    graph = nx.convert_node_labels_to_integers(graph)
     save_graph(graph, output_path)
-    draw_graph(graph)
 
 
 if __name__ == "__main__":
