@@ -85,14 +85,14 @@ Since the model is trained on a large and feature rich dataset, with embeddings,
 
 ## Results
 The best model was trained using the following hyperparameters:
-- hidden_channels: 128
+- hidden_channels: 64
 - out_channels: 32
 - lr: 0.01
 
 The model achieved the following performance on the test set:
-- ROC AUC: 0.9804
-- AP: 0.9807
-- Precision: 0.9606
+- ROC AUC: 0.9535
+- AP: 0.9641
+- Precision: 0.9469
 
 ### Inference Pipeline
 This repository also includes an inference pipeline, which allows to print the top-k most and least likely links in a graph. Note that this pipeline works on arbitrary graphs with the BERT embeddings of the nodes. This might lead to problems due to distribution shifts, as the model was trained on a specific Wikipedia grpah, and other parts of Wikipedia might have different data distributions.

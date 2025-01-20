@@ -3,6 +3,7 @@ from heapq import nlargest
 
 import torch
 from torch_geometric.utils import to_undirected
+import pandas as pd
 
 from wiki_connect.model.encoder import GCNEncoder
 from wiki_connect.model.predictor import LinkPredictor
@@ -150,13 +151,20 @@ class PredictionSummary:
         self.graph_data.edge_index = to_undirected(self.graph_data.edge_index)
         self.link_prediction_inference = link_prediction_inference
 
-    def write_summary(self, file_path, k):
-        all_predictions = self.link_prediction_inference.predict_all(
+        self.all_predictions = None
+
+    def predict_all_edges(self):
+        self.all_predictions = self.link_prediction_inference.predict_all(
             self.graph_data)
+
+    def write_summary(self, file_path, k):
+        
+        if self.all_predictions is None:
+            self.predict_all_edges()
 
         data_structure = {}
 
-        for (source, target), prob in all_predictions:
+        for (source, target), prob in self.all_predictions:
             data_structure.setdefault(source, {}).setdefault(
                 'predictions', {})[target] = prob
 
@@ -176,6 +184,24 @@ class PredictionSummary:
         with open(file_path, 'w') as f:
             json.dump(data_structure, f, indent=4)
 
+
+    def write_confidence_table(self, file_path):
+        if self.all_predictions is None:
+            self.predict_all_edges()
+
+        data_structure = {}
+
+        for (source, target), prob in self.all_predictions:
+            data_structure.setdefault(source, {})[target] = prob
+
+        # Create table with confidence values
+        table = []
+        for source, targets in data_structure.items():
+            for target, prob in targets.items():
+                table.append((source, target, prob))
+
+        df = pd.DataFrame(table, columns=['source', 'target', 'confidence'])
+        df.to_csv(file_path, index=False)
 
 if __name__ == "__main__":
     import argparse
@@ -213,6 +239,8 @@ if __name__ == "__main__":
     summary = PredictionSummary(graph_data, inference)
     summary.write_summary(args.graph_path.replace(
         '.pt', '_predictions.json'), args.k)
+    summary.write_confidence_table(args.graph_path.replace(
+        '.pt', '_confidence.csv'))
 
     top_k_edges, bot_k_edges = inference.predict_extreme_k_edges(
         graph_data, args.k)
